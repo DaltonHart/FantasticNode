@@ -1,1 +1,6 @@
-{"success":71,"percent-fail":0.18,"error":13}
+{
+  "success": 0,
+  "percent-fail": 0,
+  "error": 0,
+  "fails-log": []
+}
