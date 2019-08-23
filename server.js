@@ -1,7 +1,11 @@
 const http = require("http");
+
+const fs = require("fs");
+
 const server = http.createServer().listen(4000, () => {
   console.log("listening...");
 });
+
 server.on("request", (request, response) => {
   request.on("error", err => {
     console.error(err);
@@ -25,32 +29,39 @@ server.on("request", (request, response) => {
   }
 });
 
-let success = 0;
-let fail = 0;
-let percentFail;
-
 checkStatus = () => {
   http
     .get("http://localhost:4000/", res => {
       if (res.statusCode === 200) {
-        success++;
-        percentFail = Math.round((fail / success) * 100) / 100;
-        let rawData = "";
-        res.on("data", chunk => {
-          rawData += chunk;
-        });
-        res.on("end", () => {
-          try {
-            const parsedData = JSON.parse(rawData);
-            console.log(parsedData.Status);
-          } catch (e) {
-            console.error(e.message);
+        fs.readFile("status.json", "utf8", (err, data) => {
+          if (err) {
+            console.log(err);
+          } else {
+            obj = JSON.parse(data);
+            obj.success = obj.success + 1;
+            obj["percent-fail"] =
+              Math.round((obj.error / obj.success) * 100) / 100;
+            json = JSON.stringify(obj);
+            fs.writeFile("status.json", json, "utf8", () => {
+              console.log("updated success");
+            });
           }
         });
       } else {
-        fail++;
-        percentFail = Math.round((fail / success) * 100) / 100;
-        console.error("Failed", `${percentFail}%`);
+        fs.readFile("status.json", "utf8", (err, data) => {
+          if (err) {
+            console.log(err);
+          } else {
+            obj = JSON.parse(data);
+            obj.error = obj.error + 1;
+            obj["percent-fail"] =
+              Math.round((obj.error / obj.success) * 100) / 100;
+            json = JSON.stringify(obj);
+            fs.writeFile("status.json", json, "utf8", () => {
+              console.log("updated fail");
+            });
+          }
+        });
       }
     })
     .on("error", e => {
